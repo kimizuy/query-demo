@@ -1,19 +1,11 @@
-import {
-  GetStaticPaths,
-  GetStaticPropsContext,
-  InferGetStaticPropsType,
-} from 'next'
-import { useRouter } from 'next/router'
+import { GetServerSidePropsContext, InferGetServerSidePropsType } from 'next'
 
-type Props = InferGetStaticPropsType<typeof getStaticProps>
+type Props = InferGetServerSidePropsType<typeof getServerSideProps>
 
-const Post = ({ slug }: Props) => {
-  const router = useRouter()
-  const { page } = router.query
-
+const Page = ({ slug, page }: Props) => {
   return (
     <div>
-      {slug.map((v) => (
+      {slug?.map((v) => (
         <p key={v}>Post: {v}</p>
       ))}
       {page && <p>page query: {page}</p>}
@@ -21,17 +13,17 @@ const Post = ({ slug }: Props) => {
   )
 }
 
-export const getStaticPaths: GetStaticPaths = () => {
+export const getServerSideProps = async ({
+  params,
+  query,
+}: GetServerSidePropsContext<{ slug: string[] }>) => {
+  const slug = params?.slug
+  const { page = 1 } = query
+  if (!slug) return { props: {}, notFound: true }
+
   return {
-    paths: [],
-    fallback: 'blocking',
+    props: { slug, page },
   }
 }
 
-export const getStaticProps = async ({ params }: GetStaticPropsContext) => {
-  return {
-    props: { slug: params && Array.isArray(params.slug) ? params.slug : [''] },
-  }
-}
-
-export default Post
+export default Page
